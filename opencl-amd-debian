@@ -1,12 +1,11 @@
 #!/bin/bash
 #
 # Build a DEB package for opencl-amd based on the AUR pkgbuild.
-# Requires Docker and a fpm image.
 #
 # Exit codes on error:
-# - 1 missing build depndency
-# - 2 for user abort
-# - 3 for invalid pkgbuild
+# - 1 on missing build dependency
+# - 2 on user abort
+# - 3 on invalid pkgbuild
 
 set -e -u -o pipefail -o noclobber
 
@@ -32,6 +31,14 @@ check_builddeps() {
             exit 1
         fi
     done
+    if ! docker image inspect "$buildimage" &>/dev/null; then
+        echo ERROR: Missing docker image: "$buildimage"
+        echo
+        echo Build the required image with:
+        echo
+        echo docker build -t "$buildimage" .
+        exit 1
+    fi
 }
 
 download_pkgbuild() {
@@ -41,6 +48,7 @@ download_pkgbuild() {
     cat "$pkgbuild"
     read -p "Proceed to source this pkgbuild? y/N" -n1 -r
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+	echo
 	echo Aborted
         exit 2
     fi
