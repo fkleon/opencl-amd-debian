@@ -1,0 +1,109 @@
+#!/bin/bash
+#
+# Build a DEB package for opencl-amd based on the AUR pkgbuild.
+# Requires Docker and a fpm image.
+#
+# Exit codes on error:
+# - 1 missing build depndency
+# - 2 for user abort
+# - 3 for invalid pkgbuild
+
+set -e -u -o pipefail -o noclobber
+
+maintainer='Frederik Leonhardt <frederik@leonhardt.co.nz>'
+
+builddeps=('wget' 'docker')
+buildimage='fpm:1.11.0'
+
+pkgbuild='opencl-amd.pkgbuild'
+pkgbuild_src='https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=opencl-amd'
+
+buildroot=$(dirname "$(realpath "$0")")/build
+srcdir="$buildroot/src"
+pkgdir="$buildroot/pkg"
+
+mkdir -p "$buildroot"
+cd "$buildroot"
+
+check_builddeps() {
+    for dep in "${builddeps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            echo ERROR: Missing build dependency: "$dep"
+            exit 1
+        fi
+    done
+}
+
+download_pkgbuild() {
+    # download current opencl-amd pkgbuild from aur
+    wget -q "$pkgbuild_src" -O "$pkgbuild"
+
+    cat "$pkgbuild"
+    read -p "Proceed to source this pkgbuild? y/N" -n1 -r
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+	echo Aborted
+        exit 2
+    fi
+    # shellcheck source=./build/opencl-amd.pkgbuild
+    source "$pkgbuild"
+    
+    echo
+    echo Building "$pkgname $pkgver-$pkgrel"
+    echo
+    echo buildroot: "$buildroot"
+    echo srcdir: "$srcdir"
+    echo pkgdir: "$pkgdir"
+    echo
+}
+
+validate_source() {
+    # validate information from pkgbuild
+    if [[ ${#source[@]} -ne 1 ]]; then
+        echo "ERROR: Invalid pkgbuild. Expected a single source file!"
+        exit 3
+    fi
+    # validate existing sources
+    src=$(basename "${source[0]}")
+    sha256sum=${sha256sums[0]}
+    echo "$sha256sum $src" | sha256sum -c --status
+}
+
+download_source() {
+    # download sources
+    local dlcommand
+    dlcommand=${DLAGENTS#"https::"}
+    dlcommand=${dlcommand/\%u/${source[0]}}
+    $dlcommand
+    echo "$sha256sum $src" | sha256sum -c
+}
+
+prepare_source() {
+    # prepare srcdir, pkgdir and unpack sources
+    rm -rf "$srcdir" "$pkgdir"
+    mkdir -p "$srcdir" "$pkgdir"
+    tar -f "$src" -C "$srcdir" -x
+}
+
+package_deb() {
+    # create deb package with fpm
+    docker run --user="$(id -u)" --rm --mount type=bind,source="$buildroot",target=/app -it \
+        "$buildimage" \
+	--log ERROR \
+        -t deb -s dir -C "$(basename "$pkgdir")" -f \
+        -n "$pkgname" -v "$pkgver-$pkgrel" \
+        -a "${arch[0]}" -m "$maintainer" \
+        --description "$pkgdesc" --url "$url" \
+        --license "${license[0]}" --vendor "AMD" \
+        .
+}
+
+check_builddeps
+download_pkgbuild
+
+if ! validate_source; then
+    download_source
+fi
+
+prepare_source
+package
+package_deb
