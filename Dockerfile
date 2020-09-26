@@ -9,7 +9,8 @@ FROM debian:bullseye-slim
 ARG VERSION=1.11.0
 
 RUN apt-get update && \
-      apt-get install -y ruby ruby-dev rubygems build-essential
+      apt-get install --no-install-recommends -y ruby ruby-dev rubygems build-essential && \
+      rm -rf /var/lib/apt/lists/*
 
 RUN gem install --no-document fpm -v $VERSION
 
