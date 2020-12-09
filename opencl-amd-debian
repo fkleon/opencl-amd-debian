@@ -48,8 +48,8 @@ download_pkgbuild() {
     cat "$pkgbuild"
     read -p "Proceed to source this pkgbuild? y/N" -n1 -r
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-	echo
-	echo Aborted
+        echo
+        echo Aborted
         exit 2
     fi
     # shellcheck source=./build/opencl-amd.pkgbuild
@@ -96,7 +96,7 @@ package_deb() {
     # create deb package with fpm
     docker run --user="$(id -u)" --rm --mount type=bind,source="$buildroot",target=/app -it \
         "$buildimage" \
-	--log ERROR \
+        --log ERROR \
         -t deb -s dir -C "$(basename "$pkgdir")" -f \
         -n "$pkgname" -v "$pkgver-$pkgrel" \
         -a "${arch[0]}" -m "$maintainer" \
