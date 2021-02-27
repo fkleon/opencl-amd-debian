@@ -11,7 +11,7 @@ You need `wget` and `docker` (to run [fpm](https://github.com/jordansissel/fpm))
 
 Build the required FPM docker image with:
 
-    docker build -t fpm:1.11.0 .
+    docker build -t fpm:1.12.0 .
 
 ## Usage
 
