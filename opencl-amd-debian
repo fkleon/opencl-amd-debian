@@ -15,7 +15,11 @@ builddeps=('wget' 'docker')
 buildimage='fpm:1.11.0'
 
 pkgbuild='opencl-amd.pkgbuild'
-pkgbuild_src='https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=opencl-amd'
+if [ "${PKGBUILD_SRC:-}" ]; then
+    pkgbuild_src="${PKGBUILD_SRC}"
+else
+    pkgbuild_src='https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=opencl-amd'
+fi
 
 buildroot=$(dirname "$(realpath "$0")")/build
 srcdir="$buildroot/src"
