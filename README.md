@@ -26,3 +26,9 @@ The script performs the following steps:
 - create a DEB package with fpm in Docker
 
 The resulting DEB package is saved as `./build/opencl-amd_${pkgver}_amd64.deb`.
+
+### Packaging an older version
+
+If you wish to package an older version of the amdgpu-pro driver, you can
+override the pkgbuild via the `PKGBUILD_SRC` environment variable, for example
+to the 20.40 stable link as described [in AUR](https://aur.archlinux.org/packages/opencl-amd/#pinned-776514).
