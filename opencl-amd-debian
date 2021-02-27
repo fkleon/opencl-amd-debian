@@ -12,7 +12,7 @@ set -e -u -o pipefail -o noclobber
 maintainer='Frederik Leonhardt <frederik@leonhardt.co.nz>'
 
 builddeps=('wget' 'docker')
-buildimage='fpm:1.11.0'
+buildimage='fpm:1.12.0'
 
 pkgbuild='opencl-amd.pkgbuild'
 pkgbuild_src='https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=opencl-amd'
